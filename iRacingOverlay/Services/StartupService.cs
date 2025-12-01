@@ -35,8 +35,7 @@ public class StartupService
     {
         try
         {
-            var exePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-            exePath = exePath.Replace(".dll", ".exe");
+            var exePath = System.IO.Path.Combine(AppContext.BaseDirectory, AppName + ".exe");
 
             using var key = Registry.CurrentUser.OpenSubKey(RunKey, true);
             key?.SetValue(AppName, $"\"{exePath}\"");

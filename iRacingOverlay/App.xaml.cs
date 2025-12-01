@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Threading;
 using Hardcodet.Wpf.TaskbarNotification;
 using iRacingOverlay.Services;
