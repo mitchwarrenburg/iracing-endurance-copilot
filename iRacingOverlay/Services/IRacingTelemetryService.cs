@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using iRacingOverlay.Models;
-using iRacingSdkWrapper;
+using iRacingSDK;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -12,7 +12,7 @@ public class IRacingTelemetryService
 {
     private readonly ILogger<IRacingTelemetryService> _logger;
     private readonly AppSettings _settings;
-    private readonly SdkWrapper _sdk;
+    private readonly iRacingConnection _connection;
     private readonly Dictionary<int, DriverData> _drivers = new();
     private readonly Dictionary<int, int> _lastLapCheck = new();
     private int? _playerCarIdx;
@@ -29,15 +29,14 @@ public class IRacingTelemetryService
     {
         _logger = logger;
         _settings = settings.Value;
-        _sdk = new SdkWrapper();
-        _sdk.Start();
+        _connection = new iRacingConnection();
     }
 
     public bool Connect()
     {
         try
         {
-            if (_sdk.IsConnected)
+            if (_connection.IsConnected)
             {
                 IsConnected = true;
                 _logger.LogInformation("Connected to iRacing");
@@ -58,7 +57,6 @@ public class IRacingTelemetryService
         IsConnected = false;
         _drivers.Clear();
         _lastLapCheck.Clear();
-        _sdk.Stop();
         ConnectionStateChanged?.Invoke(this, EventArgs.Empty);
         _logger.LogInformation("Disconnected from iRacing");
     }
@@ -67,7 +65,7 @@ public class IRacingTelemetryService
     {
         try
         {
-            if (!_sdk.IsConnected)
+            if (!_connection.IsConnected)
             {
                 if (IsConnected)
                 {
@@ -81,14 +79,14 @@ public class IRacingTelemetryService
                 Connect();
             }
 
-            var telemetry = _sdk.GetTelemetryValue<object>("SessionTime");
-            if (telemetry == null)
+            var data = _connection.GetDataFeed().FirstOrDefault();
+            if (data == null)
                 return false;
 
-            UpdateDrivers();
+            UpdateDrivers(data);
 
             // Raise event with updated data
-            if (IsInRaceSession())
+            if (IsInRaceSession(data))
             {
                 var player = GetPlayerDriver();
                 if (player != null)
@@ -124,40 +122,28 @@ public class IRacingTelemetryService
         }
     }
 
-    private void UpdateDrivers()
+    private void UpdateDrivers(DataSample data)
     {
-        var sessionData = _sdk.GetSessionInfo();
-        if (sessionData == null) return;
+        var driverInfo = data.SessionData.DriverInfo;
+        _playerCarIdx = driverInfo.DriverCarIdx;
+        _sessionTime = data.Telemetry.SessionTime;
 
-        _playerCarIdx = sessionData["DriverInfo"]["DriverCarIdx"].GetValue(0);
-        _sessionTime = _sdk.GetTelemetryValue<double>("SessionTime").GetValueOrDefault();
-
-        var drivers = sessionData["DriverInfo"]["Drivers"];
-        if (drivers == null) return;
-
-        var carIdxPosition = _sdk.GetTelemetryValue<int[]>("CarIdxPosition");
-        var carIdxClassPosition = _sdk.GetTelemetryValue<int[]>("CarIdxClassPosition");
-        var carIdxLap = _sdk.GetTelemetryValue<int[]>("CarIdxLap");
-        var carIdxLastLapTime = _sdk.GetTelemetryValue<float[]>("CarIdxLastLapTime");
-        var carIdxLapDistPct = _sdk.GetTelemetryValue<float[]>("CarIdxLapDistPct");
-
-        if (carIdxPosition == null) return;
-
-        for (int carIdx = 0; carIdx < carIdxPosition.Length && carIdx < 64; carIdx++)
+        foreach (var driver in driverInfo.CompetingDrivers)
         {
-            if (carIdxPosition[carIdx] <= 0)
+            var carIdx = driver.CarIdx;
+
+            // Skip if not on track
+            var position = data.Telemetry.CarIdxPosition.GetValue(carIdx);
+            if (position <= 0)
                 continue;
 
             if (!_drivers.ContainsKey(carIdx))
             {
-                var driver = drivers.FirstOrDefault(d => d["CarIdx"].GetValue(0) == carIdx);
-                if (driver == null) continue;
-
                 _drivers[carIdx] = new DriverData
                 {
                     CarIdx = carIdx,
-                    Name = driver["UserName"].GetValue("Unknown"),
-                    CarClassId = driver["CarClassID"].GetValue(0),
+                    Name = driver.UserName ?? "Unknown",
+                    CarClassId = driver.CarClassID,
                     IsPlayer = carIdx == _playerCarIdx
                 };
             }
@@ -165,26 +151,20 @@ public class IRacingTelemetryService
             var driverData = _drivers[carIdx];
 
             // Update position in class
-            if (carIdxClassPosition != null && carIdx < carIdxClassPosition.Length)
-                driverData.PositionInClass = carIdxClassPosition[carIdx];
+            driverData.PositionInClass = data.Telemetry.CarIdxClassPosition.GetValue(carIdx);
 
             // Update current lap
-            int currentLap = 0;
-            if (carIdxLap != null && carIdx < carIdxLap.Length)
-                currentLap = carIdxLap[carIdx];
+            var currentLap = data.Telemetry.CarIdxLap.GetValue(carIdx);
 
             // Check for completed lap
             if (_lastLapCheck.ContainsKey(carIdx))
             {
                 if (currentLap > _lastLapCheck[carIdx])
                 {
-                    if (carIdxLastLapTime != null && carIdx < carIdxLastLapTime.Length)
+                    var lapTime = data.Telemetry.CarIdxLastLapTime.GetValue(carIdx);
+                    if (lapTime > 0)
                     {
-                        var lapTime = carIdxLastLapTime[carIdx];
-                        if (lapTime > 0)
-                        {
-                            driverData.AddLap(currentLap - 1, lapTime, _sessionTime);
-                        }
+                        driverData.AddLap(currentLap - 1, lapTime, _sessionTime);
                     }
                 }
             }
@@ -193,8 +173,7 @@ public class IRacingTelemetryService
             driverData.CurrentLap = currentLap;
 
             // Update track position
-            if (carIdxLapDistPct != null && carIdx < carIdxLapDistPct.Length)
-                driverData.CurrentDistance = carIdxLapDistPct[carIdx];
+            driverData.CurrentDistance = data.Telemetry.CarIdxLapDistPct.GetValue(carIdx);
         }
     }
 
@@ -308,19 +287,16 @@ public class IRacingTelemetryService
         return Math.Abs(totalDistance);
     }
 
-    private bool IsInRaceSession()
+    private bool IsInRaceSession(DataSample data)
     {
         try
         {
-            var sessionData = _sdk.GetSessionInfo();
-            if (sessionData == null) return false;
+            var sessionNum = data.Telemetry.SessionNum;
+            var sessions = data.SessionData.SessionInfo.Sessions;
 
-            var sessionNum = _sdk.GetTelemetryValue<int>("SessionNum").GetValueOrDefault();
-            var sessions = sessionData["SessionInfo"]["Sessions"];
-
-            if (sessions != null && sessionNum >= 0 && sessionNum < sessions.Count())
+            if (sessionNum >= 0 && sessionNum < sessions.Length)
             {
-                var sessionType = sessions.ElementAt(sessionNum)["SessionType"].GetValue("");
+                var sessionType = sessions[sessionNum].SessionType;
                 if (!sessionType.Contains("Race"))
                     return false;
             }

@@ -23,7 +23,8 @@
 
   <ItemGroup>
     <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="1.1.0" />
-    <PackageReference Include="iRacingSdkWrapper" Version="1.0.83" />
+    <PackageReference Include="iRacingSDK" Version="1.18.1" />
+    <PackageReference Include="YamlDotNet" Version="16.2.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
