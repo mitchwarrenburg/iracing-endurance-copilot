@@ -18,41 +18,39 @@ A professional Windows application for iRacing that provides real-time race posi
 # Or manually
 dotnet restore
 dotnet build
-dotnet run --project src/iRacingOverlay
+dotnet run --project iRacingOverlay
 ```
 
 ## Project Structure
 
 ```
-iracing-scripts/
-├── src/
-│   └── iRacingOverlay/
-│       ├── Models/              # Data structures
-│       │   ├── LapData.cs
-│       │   ├── DriverData.cs
-│       │   ├── OpponentInfo.cs
-│       │   └── Settings.cs
-│       ├── Services/            # Business logic
-│       │   ├── IRacingTelemetryService.cs
-│       │   └── StartupService.cs
-│       ├── Views/               # WPF UI
-│       │   ├── OverlayWindow.xaml
-│       │   └── OverlayWindow.xaml.cs
-│       ├── ViewModels/          # MVVM
-│       │   └── OverlayViewModel.cs
-│       ├── Resources/           # Icons, images
-│       ├── App.xaml             # Application entry
-│       ├── App.xaml.cs
-│       ├── appsettings.json     # Configuration
-│       └── iRacingOverlay.csproj
+iracing-endurance-copilot/
+├── iRacingOverlay/
+│   ├── Models/              # Data structures
+│   │   ├── LapData.cs
+│   │   ├── DriverData.cs
+│   │   ├── OpponentInfo.cs
+│   │   └── Settings.cs
+│   ├── Services/            # Business logic
+│   │   ├── IRacingTelemetryService.cs
+│   │   └── StartupService.cs
+│   ├── Views/               # WPF UI
+│   │   ├── OverlayWindow.xaml
+│   │   └── OverlayWindow.xaml.cs
+│   ├── ViewModels/          # MVVM
+│   │   └── OverlayViewModel.cs
+│   ├── Resources/           # Icons, images
+│   ├── App.xaml             # Application entry
+│   ├── App.xaml.cs
+│   ├── appsettings.json     # Configuration
+│   └── iRacingOverlay.csproj
 ├── .github/
 │   └── workflows/
 │       └── dotnet-build.yml     # CI/CD pipeline
 ├── build.ps1                    # Build script
 ├── iRacingOverlay.sln           # Visual Studio solution
 ├── README.md                    # Main documentation
-├── TECHNICAL_OVERVIEW.md        # Architecture details
-├── QUICK_REFERENCE.md           # Quick reference
+├── PROJECT_OVERVIEW.md          # This file
 └── LICENSE                      # License
 
 ```
@@ -143,7 +141,7 @@ dotnet restore
 dotnet build --configuration Release
 
 # Publish
-dotnet publish src/iRacingOverlay/iRacingOverlay.csproj `
+dotnet publish iRacingOverlay/iRacingOverlay.csproj `
   --configuration Release `
   --output ./publish `
   --self-contained true `

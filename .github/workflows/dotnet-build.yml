@@ -4,20 +4,20 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'src/**'
+      - 'iRacingOverlay/**'
       - '*.sln'
-      - '*.csproj'
+      - '.github/workflows/**'
   pull_request:
     branches: [ main ]
     paths:
-      - 'src/**'
+      - 'iRacingOverlay/**'
       - '*.sln'
-      - '*.csproj'
+      - '.github/workflows/**'
   workflow_dispatch:
 
 env:
   DOTNET_VERSION: '8.0.x'
-  PROJECT_PATH: 'src/iRacingOverlay/iRacingOverlay.csproj'
+  PROJECT_PATH: 'iRacingOverlay/iRacingOverlay.csproj'
   SOLUTION_PATH: 'iRacingOverlay.sln'
 
 jobs:

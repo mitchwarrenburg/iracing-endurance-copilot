@@ -45,13 +45,13 @@ A professional Windows application for iRacing that provides real-time race posi
 ### From Source
 ```powershell
 # Clone repository
-git clone https://github.com/yourusername/iracing-scripts.git
-cd iracing-scripts
+git clone https://github.com/yourusername/iracing-endurance-copilot.git
+cd iracing-endurance-copilot
 
 # Build and run
 dotnet restore
 dotnet build
-dotnet run --project src/iRacingOverlay
+dotnet run --project iRacingOverlay
 ```
 
 ### Requirements
@@ -212,7 +212,7 @@ dotnet build --configuration Debug
 dotnet build --configuration Release
 
 # Publish self-contained executable
-dotnet publish src/iRacingOverlay/iRacingOverlay.csproj `
+dotnet publish iRacingOverlay/iRacingOverlay.csproj `
   --configuration Release `
   --output ./publish `
   --self-contained true `
@@ -223,20 +223,21 @@ dotnet publish src/iRacingOverlay/iRacingOverlay.csproj `
 ## Project Structure
 
 ```
-iracing-scripts/
-├── src/
-│   └── iRacingOverlay/
-│       ├── Models/              # Data models
-│       ├── Services/            # Business logic
-│       ├── Views/               # WPF views
-│       ├── ViewModels/          # MVVM view models
-│       ├── Resources/           # Icons, images
-│       ├── App.xaml             # Application entry
-│       └── appsettings.json     # Configuration
+iracing-endurance-copilot/
+├── iRacingOverlay/
+│   ├── Models/              # Data models
+│   ├── Services/            # Business logic
+│   ├── Views/               # WPF views
+│   ├── ViewModels/          # MVVM view models
+│   ├── Resources/           # Icons, images
+│   ├── App.xaml             # Application entry
+│   ├── appsettings.json     # Configuration
+│   └── iRacingOverlay.csproj
 ├── .github/
 │   └── workflows/
 │       └── dotnet-build.yml     # CI/CD pipeline
-└── iRacingOverlay.sln           # Solution file
+├── iRacingOverlay.sln           # Solution file
+└── build.ps1                    # Build script
 ```
 
 ## Performance

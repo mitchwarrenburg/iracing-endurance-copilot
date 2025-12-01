@@ -20,7 +20,7 @@ Write-Host ""
 $configuration = "Release"
 $runtime = "win-x64"
 $outputDir = ".\publish"
-$projectPath = ".\src\iRacingOverlay\iRacingOverlay.csproj"
+$projectPath = ".\iRacingOverlay\iRacingOverlay.csproj"
 $solutionPath = ".\iRacingOverlay.sln"
 
 # Clean
